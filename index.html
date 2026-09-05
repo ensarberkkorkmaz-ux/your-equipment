@@ -1,0 +1,39 @@
+<!doctype html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Your Equipment v2</title>
+<style>*{box-sizing:border-box}html,body{margin:0;height:100%;font-family:Arial;background:#090d14;color:#fff}header{height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 18px;background:#0d1118;border-bottom:1px solid #263044}.brand{font-weight:900;letter-spacing:2px}.brand span{font-weight:400;color:#93a0b8}button{background:#171e2a;color:#fff;border:1px solid #344057;border-radius:9px;padding:9px 12px;cursor:pointer}.app{height:calc(100% - 58px);display:grid;grid-template-columns:210px 1fr 250px}aside{padding:15px;background:#10151e;border-right:1px solid #263044}aside:last-child{border-right:0;border-left:1px solid #263044}h3{font-size:11px;letter-spacing:1.3px;color:#8998b2}.tool{display:block;width:100%;margin:8px 0;text-align:left}.row{margin:15px 0}.row label{font-size:12px;color:#a9b4c7;display:block;margin-bottom:6px}input{width:100%}input[type=color]{height:38px}.selected{padding:12px;background:#151c27;border:1px solid #2b364a;border-radius:10px}.hud{position:absolute;bottom:12px;left:12px;background:#0c111bcc;padding:8px 10px;border:1px solid #2c374b;border-radius:9px;color:#aab6ca;font-size:12px}#view{position:relative;min-width:0}canvas{display:block}</style></head>
+<body><header><div class="brand">YOUR <span>EQUIPMENT</span></div><div><button id="reset">Sıfırla</button> <button id="save">Kaydet</button></div></header>
+<div class="app"><aside><h3>EKİPMAN EKLE</h3><button class="tool" data-t="monitor">🖥️ Monitör</button><button class="tool" data-t="keyboard">⌨️ Klavye</button><button class="tool" data-t="mouse">🖱️ Mouse</button><button class="tool" data-t="pad">▰ Mousepad</button><button class="tool" data-t="headset">🎧 Kulaklık</button></aside>
+<main id="view"><div class="hud">Boş alanda sürükle: kamerayı döndür • Tekerlek: zoom • Eşyayı sürükle: taşı</div></main>
+<aside><h3>SEÇİLİ EKİPMAN</h3><div class="selected"><b id="name">Hiçbiri</b></div><div class="row"><label>Döndür</label><input id="rot" type="range" min="-180" max="180" value="0"></div><div class="row"><label>Masa rengi</label><input id="deskColor" type="color" value="#6f4a32"></div><button id="del" style="width:100%">Seçili ekipmanı sil</button></aside></div>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script><script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+const v=document.getElementById('view'),s=new THREE.Scene();s.background=new THREE.Color(0x090d14);
+const c=new THREE.PerspectiveCamera(45,1,.1,100);c.position.set(5,4,6);
+const r=new THREE.WebGLRenderer({antialias:true});r.shadowMap.enabled=true;v.prepend(r.domElement);
+const ctrl=new THREE.OrbitControls(c,r.domElement);ctrl.enableDamping=true;ctrl.target.set(0,1.1,0);
+s.add(new THREE.HemisphereLight(0xcfe0ff,0x20283a,1.1));const dl=new THREE.DirectionalLight(0xffffff,1.2);dl.position.set(4,7,3);dl.castShadow=true;s.add(dl);
+const floor=new THREE.Mesh(new THREE.PlaneGeometry(30,30),new THREE.MeshStandardMaterial({color:0x121822}));floor.rotation.x=-Math.PI/2;s.add(floor);
+const dm=new THREE.MeshStandardMaterial({color:0x6f4a32,roughness:.65});const desk=new THREE.Mesh(new THREE.BoxGeometry(6.8,.25,3.2),dm);desk.position.y=1.65;desk.castShadow=true;s.add(desk);
+for(const [x,z] of [[-2.7,-1],[2.7,-1],[-2.7,1],[2.7,1]]){let l=new THREE.Mesh(new THREE.BoxGeometry(.24,1.65,.24),new THREE.MeshStandardMaterial({color:0x252c37}));l.position.set(x,.82,z);s.add(l)}
+let items=[],sel=null,drag=false;const ray=new THREE.Raycaster(),m=new THREE.Vector2(),pl=new THREE.Plane(new THREE.Vector3(0,1,0),-1.82);
+function g(t,n){let x=new THREE.Group();x.userData={t,n,drag:true};return x}function mat(x){return new THREE.MeshStandardMaterial({color:x,roughness:.5})}
+function mk(t){let o;if(t==='monitor'){o=g(t,'Monitör');let a=new THREE.Mesh(new THREE.BoxGeometry(2.1,1.25,.12),mat(0x252d3a));a.position.y=.8;o.add(a);let q=new THREE.Mesh(new THREE.BoxGeometry(1.9,1.03,.03),mat(0x05070a));q.position.set(0,.8,.08);o.add(q);let st=new THREE.Mesh(new THREE.BoxGeometry(.12,.7,.12),mat(0x252d3a));st.position.y=.2;o.add(st)}
+if(t==='keyboard'){o=g(t,'Klavye');o.add(new THREE.Mesh(new THREE.BoxGeometry(1.7,.13,.62),mat(0x3a4658)))}
+if(t==='mouse'){o=g(t,'Mouse');let b=new THREE.Mesh(new THREE.SphereGeometry(.22,20,14),mat(0x3a4658));b.scale.set(.75,.38,1.1);b.position.y=.1;o.add(b)}
+if(t==='pad'){o=g(t,'Mousepad');o.add(new THREE.Mesh(new THREE.BoxGeometry(2.8,.035,1.25),mat(0x202837)))}
+if(t==='headset'){o=g(t,'Kulaklık');let b=new THREE.Mesh(new THREE.TorusGeometry(.38,.06,10,30,Math.PI),mat(0x313b4c));b.rotation.z=Math.PI;b.position.y=.35;o.add(b)}
+if(!o)return;o.traverse(x=>{if(x.isMesh)x.castShadow=true});let y=1.86;if(t==='monitor')o.position.set(0,1.83,-.75);if(t==='keyboard')o.position.set(-.4,y,.35);if(t==='mouse')o.position.set(1.15,y,.45);if(t==='pad')o.position.set(.2,1.8,.35);if(t==='headset')o.position.set(2,y,-.5);s.add(o);items.push(o);select(o)}
+function select(o){sel=o;document.getElementById('name').textContent=o?o.userData.n:'Hiçbiri'}
+document.querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>mk(b.dataset.t));
+function pt(e){let b=r.domElement.getBoundingClientRect();m.x=(e.clientX-b.left)/b.width*2-1;m.y=-(e.clientY-b.top)/b.height*2+1}
+r.domElement.onpointerdown=e=>{pt(e);ray.setFromCamera(m,c);let h=ray.intersectObjects(items,true);if(h.length){let o=h[0].object;while(o.parent&&!o.userData.drag)o=o.parent;if(o.userData.drag){select(o);drag=true;ctrl.enabled=false}}}
+r.domElement.onpointermove=e=>{if(!drag||!sel)return;pt(e);ray.setFromCamera(m,c);let p=new THREE.Vector3();if(ray.ray.intersectPlane(pl,p)){sel.position.x=Math.max(-3,Math.min(3,p.x));sel.position.z=Math.max(-1.25,Math.min(1.25,p.z))}}
+window.onpointerup=()=>{drag=false;ctrl.enabled=true}
+document.getElementById('rot').oninput=e=>{if(sel)sel.rotation.y=THREE.MathUtils.degToRad(+e.target.value)}
+document.getElementById('deskColor').oninput=e=>dm.color.set(e.target.value)
+document.getElementById('del').onclick=()=>{if(!sel)return;s.remove(sel);items=items.filter(x=>x!==sel);select(null)}
+document.getElementById('reset').onclick=()=>{items.forEach(x=>s.remove(x));items=[];select(null)}
+document.getElementById('save').onclick=()=>{localStorage.setItem('ye2',JSON.stringify(items.map(x=>({t:x.userData.t,p:x.position.toArray(),r:x.rotation.y}))));alert('Kaydedildi')}
+let saved=localStorage.getItem('ye2');if(saved){try{for(const d of JSON.parse(saved)){mk(d.t);sel.position.fromArray(d.p);sel.rotation.y=d.r}select(null)}catch(e){}}else{mk('pad');mk('monitor');mk('keyboard');mk('mouse');select(null)}
+function resize(){r.setSize(v.clientWidth,v.clientHeight);c.aspect=v.clientWidth/v.clientHeight;c.updateProjectionMatrix()}window.onresize=resize;resize();
+(function a(){requestAnimationFrame(a);ctrl.update();r.render(s,c)})()
+</script></body></html>
